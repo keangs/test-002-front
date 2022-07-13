@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang>
+
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible"
+        content="IE=edge" />
+  <title>Venue Booking System</title>
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1" />
+
+  <link href="./style.css"
+        rel="stylesheet" />
+</head>
+
+<body>
+  <div class="container">
+    <div class="row"
+         style="height: 100%">
+      <div class="column"
+           style="background-color: #46529e; padding-left: 50px; color: white">
+        <div class="row roomTag">
+          <div id="roomNo"></div>
+        </div>
+
+        <div class="row"
+             style="padding-top: 50px; font-size: 12px; font-weight: bold">Upcoming</div>
+        <div class="row"
+             style="padding-top: 20px; font-size: 40px; color: #9fa8d1"
+             id="dayName"></div>
+        <div class="row"
+             style="font-size: 40px"
+             id="day"></div>
+        <div id="eventDay">
+        </div>
+
+      </div>
+      <div class="column"
+           style="flex: 1.5">
+        <div class="tabs">
+          <input type="radio"
+                 id="tab1"
+                 name="tab-control"
+                 checked />
+          <input type="radio"
+                 id="tab2"
+                 name="tab-control" />
+          <input type="radio"
+                 id="tab3"
+                 name="tab-control" />
+          <ul>
+            <li title="THIS WEEK">
+              <label for="tab1"
+                     role="button"><span>THIS WEEK</span></label>
+            </li>
+            <li title="NEXT WEEK">
+              <label for="tab2"
+                     role="button"><span>NEXT WEEK</span></label>
+            </li>
+            <li title="WHOLE MONTH">
+              <label for="tab3"
+                     role="button"><span>WHOLE MONTH</span></label>
+            </li>
+          </ul>
+
+          <div class="slider">
+            <div class="indicator"></div>
+          </div>
+        </div>
+
+        <div class="row shadow-up"
+             style=" height:100%; background-color: white;  max-height: 420px;
+  overflow: scroll;">
+          <div class="vtl"
+               id="eventThisWeek">
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+</body>
+
+</html>
+
+<script type="text/javascript"
+        src="bookingData.js"></script>
+<script>
+  const dateNow = new Date("2019-09-28 13:00:00")
+  console.log(dateNow);
+
+  GetLastDayOfWeek = function (date) {
+    let lastDate = date.toLocaleString()
+    lastDate = new Date(lastDate)
+    return new Date(lastDate.setDate(lastDate.getDate() - (lastDate.getDay() == 0 ? 7 : lastDate.getDay()) + 7));
+  }
+
+
+  const checkAvailability = (roomId, startTime, endTime) => {
+    let check = bookingData.filter((item) => {
+      return (
+        roomId == item.roomId &&
+        ((new Date(startTime) >= new Date(item.startTime) && new Date(startTime) <= new Date(item.endTime)) ||
+          (new Date(endTime) > new Date(item.startTime) && new Date(endTime) < new Date(item.endTime)))
+      )
+    })
+
+    return check.length ? false : true
+  }
+
+  const getBookingsForWeek = (roomId, weekNo) => {
+    let now = dateNow.toISOString().slice(0, -1).split("T")[0]
+    let week = GetLastDayOfWeek(dateNow)
+    week.setDate(week.getDate() + (weekNo - 1) * 7)
+    week = week.toISOString().split("T")[0]
+    return bookingData.filter((item) => {
+      return (
+        item.roomId == roomId &&
+        new Date(item.startTime).toISOString().split("T")[0] >= now &&
+        new Date(item.startTime).toISOString().split("T")[0] <= week
+      )
+    })
+  }
+  // console.log(getBookingsForWeek("A101", 2))
+  // console.log(checkAvailability("A101", "2019-10-04 12:00:00", "2019-10-04 14:00:00"))
+
+
+
+  // FOR EVENT CARD
+  const getTime = (dateTime) => {
+    return new Date(dateTime).toLocaleString("en-us", { hour12: false, hour: '2-digit', minute: '2-digit' })
+  }
+
+  getEvent("A101", 1)
+  function getEvent(roomId, week) {
+
+    document.getElementById("roomNo").innerHTML = roomId
+    const dateArr = dateNow.toLocaleDateString('en-US', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      weekday: 'long'
+    }).split(' ');
+
+    document.getElementById("dayName").innerHTML = `${dateArr[0].replace(",", "")}`
+    document.getElementById("day").innerHTML = `${dateArr[2].replace(",", "")} ${dateArr[1]}`
+
+    const events = getBookingsForWeek(roomId, week)
+    setEventWeek(events)
+
+    const eventsDay = events.filter((item) => {
+      return (
+        item.roomId == roomId &&
+        new Date(item.startTime).toISOString().split("T")[0] ==
+        new Date(dateNow).toISOString().split("T")[0])
+    })
+    eventsDay.sort((a, b) => a.startTime > b.startTime ? 1 : -1);
+    setEventDay(eventsDay)
+
+  }
+
+  function setEventDay(events) {
+    events.forEach(event => {
+      const elemEvent = document.createElement("div")
+      elemEvent.classList.add("row")
+      const elemDate = document.createElement("div")
+      elemDate.classList.add("row")
+      elemDate.classList.add("dayTime")
+      elemDate.innerHTML = `${getTime(event.startTime)}-${getTime(event.endTime)}`
+      const elemTxt = document.createElement("div")
+      elemTxt.classList.add("row")
+      elemTxt.innerHTML = event.title
+      elemEvent.append(elemDate, elemTxt)
+      document.getElementById("eventDay").appendChild(elemEvent)
+
+    })
+  }
+
+  function setEventWeek(events) {
+    events.forEach(event => {
+      const elemEvent = document.createElement("div")
+      elemEvent.classList.add("event")
+      const elemDate = document.createElement("p")
+      elemDate.classList.add("date")
+      elemDate.innerHTML = `${getTime(event.startTime)}-${getTime(event.endTime)}`
+      const elemTxt = document.createElement("p")
+      elemTxt.classList.add("txt")
+      elemTxt.innerHTML = event.title
+      elemEvent.append(elemDate, elemTxt)
+      document.getElementById("eventThisWeek").appendChild(elemEvent)
+    });
+  }
+
+</script>

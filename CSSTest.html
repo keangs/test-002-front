@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <title>CSS Test</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        margin: 0px;
+      }
+
+      #container {
+        padding-left: 4%;
+        padding-right: 4%;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      .image {
+        flex: 1;
+        height: 150px;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div id="container"></div>
+  </body>
+</html>
+
+<script>
+  getImages()
+
+  async function getImages() {
+    let response
+    await fetch("https://picsum.photos/v2/list")
+      .then((response) => response.json())
+      .then((data) => (response = data))
+
+    response.forEach((image) => {
+      var elem = document.createElement("img")
+      elem.setAttribute("src", image.download_url)
+      elem.classList.add("image")
+      document.getElementById("container").appendChild(elem)
+    })
+  }
+</script>
